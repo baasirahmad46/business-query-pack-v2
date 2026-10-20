@@ -63,3 +63,27 @@ select *,
 sum([Total Revenue]) over ( order by [Year],[Month]) [Running Total]
 from MonthlyRevenue
 order by [Year],[Month]
+
+--Q9:Which customer's latest order was above their own average order value?
+
+with OrderValues as(
+	select o.OrderID,o.CustomerID,o.OrderDate,round(sum(od.UnitPrice*Quantity*(1-Discount)),2) [Ordervalue]
+	from orders o inner join [Order Details] od on o.OrderID = od.OrderID
+	group by  o.OrderID,o.CustomerID,o.OrderDate
+),
+	CustomerOrderStatus as(
+	select *,avg(ordervalue) over (partition by customerid) [AvgOrderValue],
+	row_number() over (partition by customerid order by orderdate desc) [orderRank]
+	from OrderValues
+)
+select orderid,customerid,Ordervalue,AvgOrderValue from CustomerOrderStatus
+where orderRank = 1 and Ordervalue > AvgOrderValue
+
+--Q10:Which products are priced above the average price of their category?
+
+with AvgCategoryPrices as(
+	select productid,productname,categoryid,unitprice,
+	avg(unitprice) over (partition by categoryid) [AvgCategoryPice]
+	from Products
+)
+select * from AvgCategoryPrices where unitprice > [AvgCategoryPice]
