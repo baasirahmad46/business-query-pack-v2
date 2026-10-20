@@ -20,3 +20,15 @@ order by [Total Revenue] desc
 select year(OrderDate) [Year],month(OrderDate) [Month],round(sum(UnitPrice*Quantity*(1-Discount)),2) [Total Revenue]  from orders o inner join [Order Details] od on o.OrderID = od.OrderID
 group by  year(OrderDate),month(OrderDate)
 order by  year(OrderDate),month(OrderDate) asc
+
+--Q4:Which 10 products sell the most units?
+
+select top 10 ProductName,sum(Quantity) [Total Units Sold] from products p inner join [Order Details] od on p.ProductID = od.ProductID
+group by ProductName
+order by [Total Units Sold] desc
+
+--Q5:How much Revenue has each employee (sales rep) generated?
+
+select e.EmployeeID,e.FirstName,e.LastName,round(sum(UnitPrice*Quantity*(1-Discount)),2) [Total Revenue]  from Employees e inner join orders o on e.EmployeeID = o.EmployeeID inner join [Order Details] od on o.OrderID = od.OrderID
+group by e.EmployeeID,e.FirstName,e.LastName
+order by [Total Revenue] desc
