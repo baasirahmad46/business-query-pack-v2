@@ -32,3 +32,34 @@ order by [Total Units Sold] desc
 select e.EmployeeID,e.FirstName,e.LastName,round(sum(UnitPrice*Quantity*(1-Discount)),2) [Total Revenue]  from Employees e inner join orders o on e.EmployeeID = o.EmployeeID inner join [Order Details] od on o.OrderID = od.OrderID
 group by e.EmployeeID,e.FirstName,e.LastName
 order by [Total Revenue] desc
+
+--Q6:Within each category,how do products rank by revenue?
+
+select c.CategoryID,CategoryName,ProductName,round(sum(od.UnitPrice*Quantity*(1-Discount)),2) [Total Revenue],
+DENSE_RANK() over (partition by categoryname order by round(sum(od.UnitPrice*Quantity*(1-Discount)),2) desc) [Rank]
+from Categories c inner join Products p on c.CategoryID = p.CategoryID inner join [Order Details] od on p.ProductID = od.ProductID
+group by c.CategoryID,CategoryName,ProductName
+order by CategoryName,Rank
+
+--Q7:What is month over month revenue growth rate?
+
+with MonthlyRevenue as(
+select year(OrderDate)[Year],month(orderdate)[Month],round(sum(od.UnitPrice*Quantity*(1-Discount)),2) [Total Revenue] from orders o inner join [order details] od on o.orderid = od.OrderID
+group by year(OrderDate),month(orderdate)
+)
+select *,
+lag([Total Revenue]) over ( order by [Year],[Month]) [Previous Month Revenue],
+round(([Total Revenue] - lag([Total Revenue]) over ( order by [Year],[Month]))/lag([Total Revenue]) over ( order by [Year],[Month]) * 100.0,2) [Growth %]
+from MonthlyRevenue 
+order by [Year],[Month]
+
+--Q8:What is the running total of revenue over time?
+
+with MonthlyRevenue as(
+select year(OrderDate)[Year],month(orderdate)[Month],round(sum(od.UnitPrice*Quantity*(1-Discount)),2) [Total Revenue] from orders o inner join [order details] od on o.orderid = od.OrderID
+group by year(OrderDate),month(orderdate)
+)
+select *,
+sum([Total Revenue]) over ( order by [Year],[Month]) [Running Total]
+from MonthlyRevenue
+order by [Year],[Month]
